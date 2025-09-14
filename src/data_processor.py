@@ -5,10 +5,10 @@ def load_and_process_data():
     """Load and process all marketing and business data"""
     
     # Load CSV files
-    facebook = pd.read_csv('dataset/Facebook.csv')
-    google = pd.read_csv('dataset/Google.csv')
-    tiktok = pd.read_csv('dataset/TikTok.csv')
-    business = pd.read_csv('dataset/business.csv')
+    facebook = pd.read_csv('../Facebook.csv')
+    google = pd.read_csv('../Google.csv')
+    tiktok = pd.read_csv('../TikTok.csv')
+    business = pd.read_csv('../business.csv')
     
     # Add platform and combine
     facebook['platform'] = 'Facebook'

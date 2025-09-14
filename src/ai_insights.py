@@ -2,6 +2,9 @@
 import google.generativeai as genai
 import pandas as pd
 import streamlit as st
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import GEMINI_API_KEY
 
 # Setup Gemini AI model once at module load
