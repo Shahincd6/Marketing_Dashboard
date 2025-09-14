@@ -208,7 +208,6 @@ def main():
         st.info("No marketing data available for strategic recommendations. Please adjust your filters to see insights.")
     
     # AI Assistant
-    st.markdown("---")
     st.markdown("## AI Marketing Assistant")
     st.markdown("---")
     

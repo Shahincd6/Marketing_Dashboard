@@ -68,5 +68,3 @@ streamlit run src/marketing_dashboard.py
 - NumPy
 
 ---
-
-**🎉 Ready for evaluation!**
