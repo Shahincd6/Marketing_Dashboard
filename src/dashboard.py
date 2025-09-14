@@ -8,6 +8,45 @@ from ai_insights import ask_ai
 
 st.set_page_config(page_title="Marketing Intelligence Dashboard", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
+# Custom font styling
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    .stApp {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    div[data-testid="stSidebar"] {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .main > div {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    .stSelectbox > div > div {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    .stDateInput > div > div > div {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    .stMultiSelect > div > div {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    div[data-testid="metric-container"] > div {
+        font-family: 'Inter', sans-serif !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 @st.cache_data
 def load_data():
     return load_and_process_data()
@@ -17,14 +56,16 @@ def create_chart(data, chart_type, x, y, title, **kwargs):
         fig = px.bar(data, x=x, y=y, title=title, **kwargs)
     elif chart_type == "scatter":
         fig = px.scatter(data, x=x, y=y, title=title, **kwargs)
+    
+    fig.update_layout(font_family="Inter")
     return fig
 
 def main():
-    # Header
+    # Header - Changed to white color
     st.markdown("""
     <div style="text-align: center; padding: 2rem 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 2rem;">
-        <h1 style="color: #1f2937; margin: 0; font-size: 2.5rem;">Marketing Intelligence Dashboard</h1>
-        <p style="color: #6b7280; margin: 0.5rem 0 0 0; font-size: 1.1rem;">AI-Powered Marketing Analytics</p>
+        <h1 style="color: white; margin: 0; font-size: 2.5rem; font-family: 'Inter', sans-serif;">Marketing Intelligence Dashboard</h1>
+        <p style="color: g; margin: 0.5rem 0 0 0; font-size: 1.1rem; font-family: 'Inter', sans-serif;">AI-Powered Marketing Analytics</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -48,7 +89,23 @@ def main():
         filtered_marketing = marketing_data[marketing_data['platform'].isin(platforms)]
         filtered_business = business_data
     
-    # Executive Summary
+    # Performance Trends (moved from section 4 to section 1)
+    st.markdown("## Performance Trends")
+    st.markdown("---")
+    if len(filtered_marketing) > 0:
+        daily_data = filtered_marketing.groupby('date').agg({'spend': 'sum', 'attributed revenue': 'sum', 'roas': 'mean'}).reset_index()
+        daily_data['spend_growth'] = daily_data['spend'].pct_change() * 100
+        fig = make_subplots(rows=2, cols=2, subplot_titles=('Marketing Spend', 'Revenue Generation', 'ROAS Performance', 'Growth Rate'))
+        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['spend'], name='Spend', line=dict(color='#1f77b4')), row=1, col=1)
+        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['attributed revenue'], name='Revenue', line=dict(color='#2ca02c')), row=1, col=2)
+        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['roas'], name='ROAS', line=dict(color='#ff7f0e')), row=2, col=1)
+        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['spend_growth'], name='Growth', line=dict(color='#d62728')), row=2, col=2)
+        fig.update_layout(height=600, showlegend=False, font_family="Inter")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No trend data available for the selected filters.")
+    
+    # Executive Summary (moved from section 1 to section 2)
     st.markdown("## Executive Summary")
     st.markdown("---")
     total_spend = filtered_marketing['spend'].sum()
@@ -73,18 +130,7 @@ def main():
     with col4: st.metric("Total Orders", f"{format_compact(total_orders)}")
     with col5: st.metric("Customer Acquisition Cost", f"${format_compact(cac)}")
     
-    # Channel Performance
-    st.markdown("## Channel Performance")
-    st.markdown("---")
-    if len(filtered_marketing) > 0:
-        channel_analysis = filtered_marketing.groupby('platform').agg({'spend': 'sum', 'attributed revenue': 'sum', 'roas': 'mean'}).round(2)
-        col1, col2 = st.columns(2)
-        with col1: st.plotly_chart(create_chart(channel_analysis.reset_index(), "bar", 'platform', 'roas', "ROAS by Platform", color='roas', color_continuous_scale='RdYlGn'), use_container_width=True)
-        with col2: st.plotly_chart(create_chart(channel_analysis.reset_index(), "scatter", 'spend', 'attributed revenue', "Marketing Efficiency", size='roas', color='platform', color_discrete_map={'Facebook': '#1877F2', 'Google': '#4285F4', 'TikTok': '#000000'}), use_container_width=True)
-    else:
-        st.info("No marketing data available for the selected filters.")
-    
-    # Geographic Analysis
+    # Geographic Analysis (moved from section 3 to section 3)
     st.markdown("## Geographic Analysis")
     st.markdown("---")
     if len(filtered_marketing) > 0:
@@ -95,23 +141,37 @@ def main():
     else:
         st.info("No geographic data available for the selected filters.")
     
-    # Performance Trends
-    st.markdown("## Performance Trends")
+    # Channel Performance (moved from section 2 to section 4)
+    st.markdown("## Channel Performance")
     st.markdown("---")
     if len(filtered_marketing) > 0:
-        daily_data = filtered_marketing.groupby('date').agg({'spend': 'sum', 'attributed revenue': 'sum', 'roas': 'mean'}).reset_index()
-        daily_data['spend_growth'] = daily_data['spend'].pct_change() * 100
-        fig = make_subplots(rows=2, cols=2, subplot_titles=('Marketing Spend', 'Revenue Generation', 'ROAS Performance', 'Growth Rate'))
-        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['spend'], name='Spend', line=dict(color='#1f77b4')), row=1, col=1)
-        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['attributed revenue'], name='Revenue', line=dict(color='#2ca02c')), row=1, col=2)
-        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['roas'], name='ROAS', line=dict(color='#ff7f0e')), row=2, col=1)
-        fig.add_trace(go.Scatter(x=daily_data['date'], y=daily_data['spend_growth'], name='Growth', line=dict(color='#d62728')), row=2, col=2)
-        fig.update_layout(height=600, showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        channel_analysis = filtered_marketing.groupby('platform').agg({'spend': 'sum', 'attributed revenue': 'sum', 'roas': 'mean'}).round(2)
+        col1, col2 = st.columns(2)
+        with col1: st.plotly_chart(create_chart(channel_analysis.reset_index(), "bar", 'platform', 'roas', "ROAS by Platform", color='roas', color_continuous_scale='RdYlGn'), use_container_width=True)
+        with col2: st.plotly_chart(create_chart(channel_analysis.reset_index(), "scatter", 'spend', 'attributed revenue', "Marketing Efficiency", size='roas', color='platform', color_discrete_map={'Facebook': '#1877F2', 'Google': '#4285F4', 'TikTok': '#000000'}), use_container_width=True)
     else:
-        st.info("No trend data available for the selected filters.")
+        st.info("No marketing data available for the selected filters.")
     
-    # Business Impact
+    # AI Assistant (moved from section 7 to section 5)
+    st.markdown("## AI Marketing Assistant")
+    st.markdown("---")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+    if prompt := st.chat_input("Ask about your marketing data below..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        with st.chat_message("assistant"):
+            with st.spinner("Analyzing your data..."):
+                response = ask_ai(prompt, filtered_marketing, filtered_business)
+            st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    # Business Impact (moved from section 5 to section 6)
     if len(filtered_business) > 0:
         st.markdown("## Business Impact")
         st.markdown("---")
@@ -122,7 +182,7 @@ def main():
         with col1: st.plotly_chart(create_chart(combined, "scatter", 'spend', '# of orders', "Spend Impact on Orders", color='attributed revenue', color_continuous_scale='RdYlGn'), use_container_width=True)
         with col2: st.plotly_chart(create_chart(combined, "scatter", 'attributed revenue', 'total revenue', "Attributed vs Total Revenue", color_continuous_scale='RdYlGn'), use_container_width=True)
     
-    # Strategic Recommendations
+    # Strategic Recommendations (moved from section 6 to section 7)
     st.markdown("## Strategic Recommendations")
     st.markdown("---")
     if len(filtered_marketing) > 0:
@@ -206,27 +266,6 @@ def main():
     
     else:
         st.info("No marketing data available for strategic recommendations. Please adjust your filters to see insights.")
-    
-    # AI Assistant
-    st.markdown("## AI Marketing Assistant")
-    st.markdown("---")
-    
-    
-        
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-    if prompt := st.chat_input("Ask about your marketing data below..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        with st.chat_message("assistant"):
-            with st.spinner("Analyzing your data..."):
-                response = ask_ai(prompt, filtered_marketing, filtered_business)
-            st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
 
 if __name__ == "__main__":
     main()
